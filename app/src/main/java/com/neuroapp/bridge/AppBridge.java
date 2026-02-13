@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.neuroapp.core.AIEngine;
 import com.neuroapp.core.PluginManager;
+import com.neuroapp.core.ProxyServer;
 import com.neuroapp.core.UpdateManager;
 import com.neuroapp.main.MainActivity;
 
@@ -27,6 +28,7 @@ public class AppBridge {
     private final Gson gson;
     private final SharedPreferences prefs;
     private final File projectsDir;
+    private ProxyServer proxyServer;
 
     public AppBridge(MainActivity activity, AIEngine aiEngine,
             UpdateManager updateManager, PluginManager pluginManager) {
@@ -149,6 +151,34 @@ public class AppBridge {
         });
     }
 
+    @JavascriptInterface
+    public boolean startProxyServer() {
+        if (proxyServer != null && proxyServer.isAlive()) {
+            return true;
+        }
+        try {
+            proxyServer = new ProxyServer(aiEngine, 8317);
+            proxyServer.start();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @JavascriptInterface
+    public void stopProxyServer() {
+        if (proxyServer != null) {
+            proxyServer.stop();
+            proxyServer = null;
+        }
+    }
+
+    @JavascriptInterface
+    public boolean isProxyServerRunning() {
+        return proxyServer != null && proxyServer.isAlive();
+    }
+
     // ==================== Settings ====================
 
     @JavascriptInterface
@@ -156,16 +186,11 @@ public class AppBridge {
         JsonObject settings = new JsonObject();
         settings.addProperty("aiProvider", aiEngine.getProvider());
         settings.addProperty("apiKeyOpenai", maskApiKey(prefs.getString("api_key_openai", "")));
-        settings.addProperty("aiProvider", aiEngine.getProvider());
-        settings.addProperty("apiKeyOpenai", maskApiKey(prefs.getString("api_key_openai", "")));
         settings.addProperty("apiKeyGemini", maskApiKey(prefs.getString("api_key_gemini", "")));
         settings.addProperty("apiKeyAnthropic", maskApiKey(prefs.getString("api_key_anthropic", "")));
         settings.addProperty("proxyPalUrl", aiEngine.getProxyPalUrl());
         settings.addProperty("proxyPalModel", aiEngine.getProxyPalModel());
         settings.addProperty("customHeaders", aiEngine.getCustomHeaders());
-        settings.addProperty("autoUpdate", updateManager.isAutoUpdateEnabled());
-        settings.addProperty("proxyPalUrl", aiEngine.getProxyPalUrl());
-        settings.addProperty("proxyPalModel", aiEngine.getProxyPalModel());
         settings.addProperty("autoUpdate", updateManager.isAutoUpdateEnabled());
         settings.addProperty("currentVersion", updateManager.getCurrentVersion());
         settings.addProperty("theme", prefs.getString("theme", "dark"));

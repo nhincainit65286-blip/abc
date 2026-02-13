@@ -22,6 +22,9 @@ function loadSettings() {
 
             // Apply font size
             updateFontSize(settings.fontSize || 14);
+
+            // Check server status
+            checkServerStatus();
         }
     } catch (e) {
         console.log('Load settings error:', e);
@@ -278,8 +281,43 @@ function onDownloadError(callbackId, error) {
     showToast('Download failed: ' + error, 'error');
 }
 
-function installAppUpdate(filePath) {
+function checkServerStatus() {
     if (typeof NeuroApp !== 'undefined') {
-        NeuroApp.installUpdate(filePath);
+        const isRunning = NeuroApp.isProxyServerRunning();
+        updateServerUI(isRunning);
+    }
+}
+
+function toggleLocalServer() {
+    if (typeof NeuroApp !== 'undefined') {
+        const toggle = document.getElementById('settingProxyServer');
+        if (toggle.checked) {
+            const success = NeuroApp.startProxyServer();
+            if (success) {
+                showToast('Proxy Server Started 🟢', 'success');
+                updateServerUI(true);
+            } else {
+                showToast('Failed to start server', 'error');
+                toggle.checked = false;
+                updateServerUI(false);
+            }
+        } else {
+            NeuroApp.stopProxyServer();
+            showToast('Proxy Server Stopped 🔴', 'info');
+            updateServerUI(false);
+        }
+    }
+}
+
+function updateServerUI(isRunning) {
+    const toggle = document.getElementById('settingProxyServer');
+    const statusText = document.getElementById('serverStatusText');
+    const statusDiv = document.getElementById('serverStatus');
+
+    if (toggle) toggle.checked = isRunning;
+
+    if (statusText && statusDiv) {
+        statusText.textContent = isRunning ? 'Running (Port 8317)' : 'Stopped';
+        statusText.style.color = isRunning ? '#4caf50' : '#f44336';
     }
 }

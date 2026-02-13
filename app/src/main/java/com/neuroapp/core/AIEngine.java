@@ -95,11 +95,21 @@ public class AIEngine {
 
     public void generateCode(String prompt, AICallback callback) {
         String provider = getProvider();
-        String apiKey = getApiKey();
+        generateCodeWithProvider(prompt, provider, callback);
+    }
+
+    public void generateCodeWithProvider(String prompt, String provider, AICallback callback) {
+        String apiKey;
+        if ("anthropic".equals(provider))
+            apiKey = prefs.getString("api_key_anthropic", "");
+        else if ("gemini".equals(provider))
+            apiKey = prefs.getString("api_key_gemini", "");
+        else
+            apiKey = prefs.getString("api_key_openai", "");
 
         // ProxyPal doesn't require an API key (proxy handles auth)
         if (!"proxypal".equals(provider) && (apiKey == null || apiKey.isEmpty())) {
-            callback.onError("API key not set. Please configure in Settings.");
+            callback.onError("API key not set for " + provider + ". Please configure in Settings.");
             return;
         }
 
@@ -113,6 +123,7 @@ public class AIEngine {
                 } else if ("proxypal".equals(provider)) {
                     result = callProxyPal(prompt);
                 } else {
+                    // Default to Gemini or specific check
                     result = callGemini(apiKey, prompt);
                 }
                 mainHandler.post(() -> callback.onSuccess(result));
