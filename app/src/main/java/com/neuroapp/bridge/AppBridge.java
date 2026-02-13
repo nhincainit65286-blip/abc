@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.neuroapp.core.AIEngine;
 import com.neuroapp.core.PluginManager;
+import com.neuroapp.core.ProxyConfig;
 import com.neuroapp.core.ProxyServer;
 import com.neuroapp.core.UpdateManager;
 import com.neuroapp.main.MainActivity;
