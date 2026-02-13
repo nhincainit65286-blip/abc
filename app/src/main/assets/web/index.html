@@ -423,6 +423,107 @@
     </div>
     </main>
 
+    <!-- Proxy Page -->
+    <div id="page-proxy" class="page">
+        <div class="page-scroll">
+            <div class="header" style="padding: 16px; display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">🔌 Proxy Dashboard</h3>
+                <div style="display:flex; align-items:center;">
+                    <div id="proxyStatusIndicator" class="status-indicator stopped"></div>
+                    <span id="proxyStatusText"
+                        style="margin-right:10px; font-size:12px; color:var(--text-secondary);">Stopped</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="proxyServerToggle" onchange="toggleProxyServer()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="container" style="padding:16px;">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotalReqs">0</div>
+                        <div class="stat-label">Requests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statAvgLatency">0ms</div>
+                        <div class="stat-label">Avg Latency</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statErrorRate">0%</div>
+                        <div class="stat-label">Error Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTokens">0</div>
+                        <div class="stat-label">Est. Tokens</div>
+                    </div>
+                </div>
+
+                <!-- Connection Info -->
+                <div class="card"
+                    style="margin-top:16px; background:var(--bg-secondary); padding:16px; border-radius:12px;">
+                    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Local Endpoint</div>
+                    <div class="code-block"
+                        style="margin:0; padding:8px; background:var(--bg-tertiary); border-radius:6px; font-family:monospace; font-size:12px;">
+                        http://DEVICE_IP:8317/v1/chat/completions</div>
+                    <div style="font-size:10px; color:var(--text-secondary); margin-top:8px;">
+                        Point your cursor/editor here to use NeuroApp as an AI Proxy.
+                    </div>
+                </div>
+
+                <!-- Logs -->
+                <div class="card"
+                    style="margin-top:16px; padding:0; overflow:hidden; background:var(--bg-secondary); border-radius:12px;">
+                    <div
+                        style="padding:12px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:500;">Live Logs</div>
+                        <button class="btn-small" onclick="clearLogs()"
+                            style="background:none; border:1px solid var(--border-color); color:var(--text-secondary); padding:4px 8px; border-radius:4px; font-size:10px;">🗑️
+                            Clear</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="log-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Method</th>
+                                    <th>Model</th>
+                                    <th>Status</th>
+                                    <th>Dur</th>
+                                </tr>
+                            </thead>
+                            <tbody id="proxyLogsBody">
+                                <!-- Logs here -->
+                                <tr>
+                                    <td colspan="5"
+                                        style="text-align:center; padding:20px; color:var(--text-secondary);">No
+                                        requests yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Detail Modal -->
+    <div id="logDetailModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content" style="width:90%; height:80%; max-width:600px; display:flex; flex-direction:column;">
+            <div
+                style="padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-weight:bold;">Log Details</div>
+                <button onclick="closeLogModal()"
+                    style="background:none; border:none; color:var(--text-primary); cursor:pointer; font-size:20px;">✕</button>
+            </div>
+            <div id="logDetailContent" style="padding:16px; overflow-y:auto; flex:1;">
+                <!-- Details -->
+            </div>
+        </div>
+    </div>
+
+
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <button class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
@@ -442,6 +543,11 @@
         <button class="nav-item" data-page="plugins" onclick="navigateTo('plugins')">
             <span class="nav-icon">🧩</span>
             <span class="nav-label">Plugins</span>
+            <span class="nav-indicator"></span>
+        </button>
+        <button class="nav-item" data-page="proxy" onclick="navigateTo('proxy')">
+            <span class="nav-icon">🔌</span>
+            <span class="nav-label">Proxy</span>
             <span class="nav-indicator"></span>
         </button>
         <button class="nav-item" data-page="settings" onclick="navigateTo('settings')">
@@ -473,6 +579,7 @@
     <script src="js/editor.js"></script>
     <script src="js/ai-engine.js"></script>
     <script src="js/plugins.js"></script>
+    <script src="js/proxy.js"></script>
     <script src="js/settings.js"></script>
 </body>
 

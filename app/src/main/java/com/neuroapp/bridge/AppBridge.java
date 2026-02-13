@@ -179,6 +179,21 @@ public class AppBridge {
         return proxyServer != null && proxyServer.isAlive();
     }
 
+    @JavascriptInterface
+    public String getProxyLogs() {
+        if (proxyServer != null) {
+            return gson.toJson(proxyServer.getLogs());
+        }
+        return "[]";
+    }
+
+    @JavascriptInterface
+    public void clearProxyLogs() {
+        if (proxyServer != null) {
+            proxyServer.clearLogs();
+        }
+    }
+
     // ==================== Settings ====================
 
     @JavascriptInterface

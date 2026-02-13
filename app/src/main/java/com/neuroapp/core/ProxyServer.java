@@ -20,11 +20,28 @@ public class ProxyServer extends NanoHTTPD {
 
     private final AIEngine aiEngine;
     private final Gson gson;
+    private final java.util.LinkedList<ProxyLog> logs = new java.util.LinkedList<>();
+    private static final int MAX_LOGS = 50;
 
     public ProxyServer(AIEngine aiEngine, int port) {
         super(port);
         this.aiEngine = aiEngine;
         this.gson = new Gson();
+    }
+
+    public synchronized java.util.List<ProxyLog> getLogs() {
+        return new java.util.ArrayList<>(logs);
+    }
+
+    public synchronized void clearLogs() {
+        logs.clear();
+    }
+
+    private synchronized void addLog(ProxyLog log) {
+        logs.addFirst(log);
+        if (logs.size() > MAX_LOGS) {
+            logs.removeLast();
+        }
     }
 
     @Override
@@ -39,6 +56,10 @@ public class ProxyServer extends NanoHTTPD {
         }
 
         return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found");
+    }
+
+    private Response handleModels(IHTTPSession session) {
+        return handleModels();
     }
 
     private Response handleModels() {
@@ -65,12 +86,14 @@ public class ProxyServer extends NanoHTTPD {
         return model;
     }
 
-    private Response handleModels(IHTTPSession session) {
-        return handleModels();
-    }
-
     private Response handleChatCompletions(IHTTPSession session) {
         Map<String, String> files = new HashMap<>();
+        long startTime = System.currentTimeMillis();
+        String logId = java.util.UUID.randomUUID().toString().substring(0, 8);
+        String model = "unknown";
+        String provider = "unknown";
+        String requestBodyStr = "";
+
         try {
             session.parseBody(files);
             String postData = files.get("postData");
@@ -79,12 +102,10 @@ public class ProxyServer extends NanoHTTPD {
                 return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Missing body");
             }
 
+            requestBodyStr = postData;
             JsonObject body = JsonParser.parseString(postData).getAsJsonObject();
-            String model = body.has("model") ? body.get("model").getAsString() : "gpt-4o";
+            model = body.has("model") ? body.get("model").getAsString() : "gpt-4o";
 
-            // Extract the last user message to use as prompt
-            // NOTE: AIEngine currently supports only single prompt.
-            // Future update should pass full history.
             String prompt = "";
             if (body.has("messages")) {
                 JsonArray messages = body.getAsJsonArray("messages");
@@ -101,10 +122,7 @@ public class ProxyServer extends NanoHTTPD {
                 return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "No user message found");
             }
 
-            // Determine provider based on model alias or settings if internal
-            // Assume external client calls us, so we use internal keys
-
-            String targetProvider = "openai"; // default
+            String targetProvider = "openai";
             if (model.contains("claude"))
                 targetProvider = "anthropic";
             else if (model.contains("gemini"))
@@ -112,9 +130,12 @@ public class ProxyServer extends NanoHTTPD {
             else if (model.contains("gpt"))
                 targetProvider = "openai";
 
-            CompletableFuture<String> future = new CompletableFuture<>();
+            provider = targetProvider;
 
-            // Use a specific method that allows passing provider
+            ProxyLog log = new ProxyLog(logId, "POST", "/v1/chat/completions", model, provider);
+            log.requestBody = requestBodyStr.length() > 200 ? requestBodyStr.substring(0, 200) + "..." : requestBodyStr;
+
+            CompletableFuture<String> future = new CompletableFuture<>();
             aiEngine.generateCodeWithProvider(prompt, targetProvider, new AIEngine.AICallback() {
                 @Override
                 public void onSuccess(String result) {
@@ -131,11 +152,14 @@ public class ProxyServer extends NanoHTTPD {
             try {
                 aiResult = future.get(60, TimeUnit.SECONDS);
             } catch (Exception e) {
+                log.status = 500;
+                log.durationMs = System.currentTimeMillis() - startTime;
+                log.responseBody = "Error: " + e.getMessage();
+                addLog(log);
                 return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
                         "AI processing failed: " + e.getMessage());
             }
 
-            // Construct OpenAI-compatible response
             JsonObject response = new JsonObject();
             String id = "chatcmpl-" + System.currentTimeMillis();
             response.addProperty("id", id);
@@ -157,16 +181,31 @@ public class ProxyServer extends NanoHTTPD {
             choices.add(choice);
             response.add("choices", choices);
 
-            // Add usage dummy
             JsonObject usage = new JsonObject();
-            usage.addProperty("prompt_tokens", prompt.length() / 4);
-            usage.addProperty("completion_tokens", aiResult.length() / 4);
-            usage.addProperty("total_tokens", (prompt.length() + aiResult.length()) / 4);
+            int pTokens = prompt.length() / 4;
+            int cTokens = aiResult.length() / 4;
+            usage.addProperty("prompt_tokens", pTokens);
+            usage.addProperty("completion_tokens", cTokens);
+            usage.addProperty("total_tokens", pTokens + cTokens);
             response.add("usage", usage);
 
-            return newFixedLengthResponse(Response.Status.OK, "application/json", gson.toJson(response));
+            String responseStr = gson.toJson(response);
 
-        } catch (IOException | ResponseException e) {
+            log.status = 200;
+            log.durationMs = System.currentTimeMillis() - startTime;
+            log.responseBody = responseStr.length() > 200 ? responseStr.substring(0, 200) + "..." : responseStr;
+            log.promptTokens = pTokens;
+            log.completionTokens = cTokens;
+            addLog(log);
+
+            return newFixedLengthResponse(Response.Status.OK, "application/json", responseStr);
+
+        } catch (Exception e) {
+            ProxyLog log = new ProxyLog(logId, "POST", "/v1/chat/completions", model, provider);
+            log.status = 500;
+            log.durationMs = System.currentTimeMillis() - startTime;
+            log.responseBody = "Exception: " + e.getMessage();
+            addLog(log);
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
                     "Server error: " + e.getMessage());
         }
