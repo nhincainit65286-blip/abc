@@ -29,6 +29,7 @@ public class AIEngine {
 
     private static final String OPENAI_URL = "https://api.openai.com/v1/chat/completions";
     private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private static final String PROXYPAL_DEFAULT_URL = "http://localhost:8317/v1/chat/completions";
 
     private final Context context;
     private final OkHttpClient client;
@@ -67,11 +68,28 @@ public class AIEngine {
         prefs.edit().putString("api_key_" + provider, key).apply();
     }
 
+    public String getProxyPalUrl() {
+        return prefs.getString("proxypal_url", PROXYPAL_DEFAULT_URL);
+    }
+
+    public void setProxyPalUrl(String url) {
+        prefs.edit().putString("proxypal_url", url).apply();
+    }
+
+    public String getProxyPalModel() {
+        return prefs.getString("proxypal_model", "claude-sonnet-4-20250514");
+    }
+
+    public void setProxyPalModel(String model) {
+        prefs.edit().putString("proxypal_model", model).apply();
+    }
+
     public void generateCode(String prompt, AICallback callback) {
         String provider = getProvider();
         String apiKey = getApiKey();
 
-        if (apiKey == null || apiKey.isEmpty()) {
+        // ProxyPal doesn't require an API key (proxy handles auth)
+        if (!"proxypal".equals(provider) && (apiKey == null || apiKey.isEmpty())) {
             callback.onError("API key not set. Please configure in Settings.");
             return;
         }
@@ -81,6 +99,8 @@ public class AIEngine {
                 String result;
                 if ("openai".equals(provider)) {
                     result = callOpenAI(apiKey, prompt);
+                } else if ("proxypal".equals(provider)) {
+                    result = callProxyPal(prompt);
                 } else {
                     result = callGemini(apiKey, prompt);
                 }
@@ -218,6 +238,48 @@ public class AIEngine {
                     .getAsJsonArray("parts")
                     .get(0).getAsJsonObject()
                     .get("text").getAsString();
+        }
+    }
+
+    private String callProxyPal(String prompt) throws IOException {
+        JsonObject message = new JsonObject();
+        message.addProperty("role", "user");
+        message.addProperty("content", prompt);
+
+        JsonArray messages = new JsonArray();
+
+        JsonObject systemMsg = new JsonObject();
+        systemMsg.addProperty("role", "system");
+        systemMsg.addProperty("content", "You are NeuroApp AI, a powerful code generation and analysis engine. "
+                + "You generate clean, efficient, well-documented code. "
+                + "You always follow best practices and modern patterns.");
+        messages.add(systemMsg);
+        messages.add(message);
+
+        JsonObject body = new JsonObject();
+        body.addProperty("model", getProxyPalModel());
+        body.add("messages", messages);
+        body.addProperty("max_tokens", 4096);
+        body.addProperty("temperature", 0.7);
+
+        String proxyUrl = getProxyPalUrl();
+
+        Request request = new Request.Builder()
+                .url(proxyUrl)
+                .addHeader("Content-Type", "application/json")
+                .post(RequestBody.create(body.toString(), MediaType.parse("application/json")))
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            String responseBody = response.body().string();
+            if (!response.isSuccessful()) {
+                throw new IOException("ProxyPal Error (" + response.code() + "): " + responseBody);
+            }
+            JsonObject json = gson.fromJson(responseBody, JsonObject.class);
+            return json.getAsJsonArray("choices")
+                    .get(0).getAsJsonObject()
+                    .getAsJsonObject("message")
+                    .get("content").getAsString();
         }
     }
 

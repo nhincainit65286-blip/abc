@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0d1117">
     <title>NeuroApp</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <!-- Splash Screen -->
     <div id="splash" class="splash-screen">
@@ -162,10 +166,8 @@
                             <div class="line-numbers" id="lineNumbers">
                                 <span>1</span>
                             </div>
-                            <textarea id="codeEditor" class="code-editor" 
-                                spellcheck="false"
-                                placeholder="// Start coding here...&#10;// Use AI (🤖) to generate code&#10;// Use Evolve (🧬) to improve code"
-                            ></textarea>
+                            <textarea id="codeEditor" class="code-editor" spellcheck="false"
+                                placeholder="// Start coding here...&#10;// Use AI (🤖) to generate code&#10;// Use Evolve (🧬) to improve code"></textarea>
                         </div>
                     </div>
 
@@ -186,27 +188,33 @@
                         <h3>🤖 AI Assistant</h3>
                         <div class="ai-mode-selector">
                             <button class="ai-mode active" data-mode="chat" onclick="setAIMode('chat')">Chat</button>
-                            <button class="ai-mode" data-mode="generate" onclick="setAIMode('generate')">Generate</button>
+                            <button class="ai-mode" data-mode="generate"
+                                onclick="setAIMode('generate')">Generate</button>
                             <button class="ai-mode" data-mode="evolve" onclick="setAIMode('evolve')">Evolve</button>
                         </div>
                     </div>
-                    
+
                     <div id="aiChat" class="ai-chat">
                         <div class="ai-welcome">
                             <div class="ai-avatar-large">🧠</div>
                             <h3>NeuroApp AI</h3>
                             <p>Tôi có thể generate code, phân tích, sửa lỗi, và tự phát triển code cho bạn.</p>
                             <div class="ai-suggestions">
-                                <button class="suggestion-chip" onclick="quickPrompt('Create a REST API server with Node.js')">Create REST API</button>
-                                <button class="suggestion-chip" onclick="quickPrompt('Build a todo app with React')">Todo App</button>
-                                <button class="suggestion-chip" onclick="quickPrompt('Write a Python web scraper')">Web Scraper</button>
+                                <button class="suggestion-chip"
+                                    onclick="quickPrompt('Create a REST API server with Node.js')">Create REST
+                                    API</button>
+                                <button class="suggestion-chip"
+                                    onclick="quickPrompt('Build a todo app with React')">Todo App</button>
+                                <button class="suggestion-chip" onclick="quickPrompt('Write a Python web scraper')">Web
+                                    Scraper</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="ai-input-area">
                         <div class="ai-input-wrapper">
-                            <textarea id="aiInput" class="ai-input" placeholder="Nhập prompt để generate code..." rows="1"></textarea>
+                            <textarea id="aiInput" class="ai-input" placeholder="Nhập prompt để generate code..."
+                                rows="1"></textarea>
                             <button id="aiSendBtn" class="ai-send-btn" onclick="sendAIMessage()">
                                 <span class="send-icon">➤</span>
                             </button>
@@ -224,7 +232,8 @@
                     <div class="plugins-header">
                         <h3>🧩 Plugins</h3>
                         <div class="plugins-tabs">
-                            <button class="plugin-tab active" onclick="showPluginSection('available')">Available</button>
+                            <button class="plugin-tab active"
+                                onclick="showPluginSection('available')">Available</button>
                             <button class="plugin-tab" onclick="showPluginSection('installed')">Installed</button>
                         </div>
                     </div>
@@ -242,12 +251,14 @@
                     <!-- AI Provider -->
                     <div class="settings-section">
                         <div class="settings-section-title">🤖 AI Configuration</div>
-                        
+
                         <div class="setting-item">
                             <label>AI Provider</label>
-                            <select id="settingProvider" class="setting-select" onchange="saveSetting('aiProvider', this.value)">
+                            <select id="settingProvider" class="setting-select"
+                                onchange="saveSetting('aiProvider', this.value); toggleProxyPalSettings()">
                                 <option value="gemini">Google Gemini</option>
                                 <option value="openai">OpenAI (GPT)</option>
+                                <option value="proxypal">🔌 ProxyPal (Local Proxy)</option>
                             </select>
                         </div>
 
@@ -262,16 +273,67 @@
                         <div class="setting-item">
                             <label>Gemini API Key</label>
                             <div class="setting-input-group">
-                                <input type="password" id="settingKeyGemini" class="setting-input" placeholder="AIza...">
+                                <input type="password" id="settingKeyGemini" class="setting-input"
+                                    placeholder="AIza...">
                                 <button class="setting-save-btn" onclick="saveApiKey('gemini')">Save</button>
                             </div>
                         </div>
                     </div>
 
+                    <!-- ProxyPal Settings -->
+                    <div id="proxyPalSection" class="settings-section" style="display:none;">
+                        <div class="settings-section-title">🔌 ProxyPal Configuration</div>
+                        <div class="proxypal-info">
+                            <p style="color:var(--text-secondary);font-size:12px;line-height:1.5;margin-bottom:12px;">
+                                ProxyPal bridges your AI subscriptions (Claude, ChatGPT, Gemini, Copilot) via a local
+                                proxy.
+                                <a href="https://github.com/heyhuynhgiabuu/proxypal"
+                                    style="color:var(--accent-purple);">Learn more →</a>
+                            </p>
+                        </div>
+
+                        <div class="setting-item">
+                            <label>Proxy URL</label>
+                            <div class="setting-input-group">
+                                <input type="url" id="settingProxyPalUrl" class="setting-input"
+                                    placeholder="http://localhost:8317/v1/chat/completions">
+                                <button class="setting-save-btn" onclick="saveProxyPalUrl()">Save</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <label>Model</label>
+                            <select id="settingProxyPalModel" class="setting-select"
+                                onchange="saveSetting('proxyPalModel', this.value)">
+                                <optgroup label="Claude">
+                                    <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+                                    <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                    <option value="claude-3-opus">Claude 3 Opus</option>
+                                </optgroup>
+                                <optgroup label="OpenAI">
+                                    <option value="gpt-4o">GPT-4o</option>
+                                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                    <option value="o1-preview">o1 Preview</option>
+                                </optgroup>
+                                <optgroup label="Gemini">
+                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                </optgroup>
+                                <optgroup label="GitHub Copilot">
+                                    <option value="copilot-gpt-4o">Copilot GPT-4o</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <button class="setting-action-btn" onclick="testProxyPalConnection()">
+                            🔌 Test Connection
+                        </button>
+                    </div>
+
                     <!-- Editor Settings -->
                     <div class="settings-section">
                         <div class="settings-section-title">✏️ Editor</div>
-                        
+
                         <div class="setting-item">
                             <label>Font Size</label>
                             <input type="range" id="settingFontSize" class="setting-range" min="10" max="24" value="14"
@@ -282,7 +344,8 @@
                         <div class="setting-item toggle-item">
                             <label>Auto Save</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="settingAutoSave" checked onchange="saveSetting('autoSave', this.checked)">
+                                <input type="checkbox" id="settingAutoSave" checked
+                                    onchange="saveSetting('autoSave', this.checked)">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -295,7 +358,8 @@
                         <div class="setting-item toggle-item">
                             <label>Auto Update</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="settingAutoUpdate" onchange="saveSetting('autoUpdate', this.checked)">
+                                <input type="checkbox" id="settingAutoUpdate"
+                                    onchange="saveSetting('autoUpdate', this.checked)">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -303,8 +367,10 @@
                         <div class="setting-item">
                             <label>Update Server URL</label>
                             <div class="setting-input-group">
-                                <input type="url" id="settingUpdateUrl" class="setting-input" placeholder="https://api.github.com/repos/...">
-                                <button class="setting-save-btn" onclick="saveSetting('updateUrl', document.getElementById('settingUpdateUrl').value)">Save</button>
+                                <input type="url" id="settingUpdateUrl" class="setting-input"
+                                    placeholder="https://api.github.com/repos/...">
+                                <button class="setting-save-btn"
+                                    onclick="saveSetting('updateUrl', document.getElementById('settingUpdateUrl').value)">Save</button>
                             </div>
                         </div>
 
@@ -384,4 +450,5 @@
     <script src="js/plugins.js"></script>
     <script src="js/settings.js"></script>
 </body>
+
 </html>

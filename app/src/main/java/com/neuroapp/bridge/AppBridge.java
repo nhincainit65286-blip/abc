@@ -141,6 +141,8 @@ public class AppBridge {
         settings.addProperty("aiProvider", aiEngine.getProvider());
         settings.addProperty("apiKeyOpenai", maskApiKey(prefs.getString("api_key_openai", "")));
         settings.addProperty("apiKeyGemini", maskApiKey(prefs.getString("api_key_gemini", "")));
+        settings.addProperty("proxyPalUrl", aiEngine.getProxyPalUrl());
+        settings.addProperty("proxyPalModel", aiEngine.getProxyPalModel());
         settings.addProperty("autoUpdate", updateManager.isAutoUpdateEnabled());
         settings.addProperty("currentVersion", updateManager.getCurrentVersion());
         settings.addProperty("theme", prefs.getString("theme", "dark"));
@@ -177,6 +179,12 @@ public class AppBridge {
                 break;
             case "updateUrl":
                 editor.putString("update_url", value);
+                break;
+            case "proxyPalUrl":
+                aiEngine.setProxyPalUrl(value);
+                break;
+            case "proxyPalModel":
+                aiEngine.setProxyPalModel(value);
                 break;
         }
         editor.apply();

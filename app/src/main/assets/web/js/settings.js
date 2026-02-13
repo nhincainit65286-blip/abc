@@ -12,7 +12,12 @@ function loadSettings() {
             document.getElementById('settingAutoSave').checked = settings.autoSave !== false;
             document.getElementById('settingFontSize').value = settings.fontSize || 14;
             document.getElementById('fontSizeValue').textContent = (settings.fontSize || 14) + 'px';
+            document.getElementById('settingProxyPalUrl').value = settings.proxyPalUrl || '';
+            document.getElementById('settingProxyPalModel').value = settings.proxyPalModel || 'claude-sonnet-4-20250514';
             document.getElementById('settingUpdateUrl').value = settings.updateUrl || '';
+
+            // Show/hide ProxyPal section
+            toggleProxyPalSettings();
 
             // Apply font size
             updateFontSize(settings.fontSize || 14);
@@ -54,6 +59,59 @@ function saveApiKey(provider) {
         }
     } catch (e) {
         showToast('Error saving API key', 'error');
+    }
+}
+
+function saveProxyPalUrl() {
+    const url = document.getElementById('settingProxyPalUrl').value.trim();
+    if (!url) {
+        showToast('Enter a Proxy URL', 'error');
+        return;
+    }
+    saveSetting('proxyPalUrl', url);
+}
+
+function toggleProxyPalSettings() {
+    const provider = document.getElementById('settingProvider').value;
+    const section = document.getElementById('proxyPalSection');
+    if (section) {
+        section.style.display = provider === 'proxypal' ? 'block' : 'none';
+    }
+}
+
+function testProxyPalConnection() {
+    showToast('Testing ProxyPal connection... 🔌', 'info');
+    // Simple test by trying to generate a short greeting
+    if (typeof NeuroApp !== 'undefined') {
+        const cbId = registerCallback(
+            (result) => {
+                showModal('Connection Successful 🔌', `
+                    <div style="text-align:center; padding:12px 0;">
+                        <div style="font-size:48px; margin-bottom:12px;">✅</div>
+                        <p style="margin-bottom:12px;">ProxyPal is working!</p>
+                        <div style="background:#1e1e1e; padding:8px; border-radius:6px; font-family:monospace; font-size:12px; text-align:left; color:#aaffaa;">
+                            ${escapeHtml(result)}
+                        </div>
+                    </div>
+                `);
+            },
+            (error) => {
+                showModal('Connection Failed ❌', `
+                    <div style="text-align:center; padding:12px 0;">
+                        <div style="font-size:48px; margin-bottom:12px;">⚠️</div>
+                        <p style="margin-bottom:12px;">Could not connect to ProxyPal.</p>
+                        <div style="background:#2d1a1a; padding:8px; border-radius:6px; font-family:monospace; font-size:12px; text-align:left; color:#ffaaaa;">
+                            ${escapeHtml(error)}
+                        </div>
+                        <p style="margin-top:12px; font-size:12px; color:var(--text-secondary);">
+                            Make sure ProxyPal app is running and the URL is correct.<br>
+                            (Default: http://localhost:8317/v1/chat/completions)
+                        </p>
+                    </div>
+                `);
+            }
+        );
+        NeuroApp.generateCode('Say "Connection successful!" in 3 words.', cbId);
     }
 }
 
