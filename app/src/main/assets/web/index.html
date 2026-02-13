@@ -429,9 +429,6 @@
             <div class="header" style="padding: 16px; display:flex; justify-content:space-between; align-items:center;">
                 <h3 style="margin:0;">🔌 Proxy Dashboard</h3>
                 <div style="display:flex; align-items:center;">
-                    <div id="proxyStatusIndicator" class="status-indicator stopped"></div>
-                    <span id="proxyStatusText"
-                        style="margin-right:10px; font-size:12px; color:var(--text-secondary);">Stopped</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="proxyServerToggle" onchange="toggleProxyServer()">
                         <span class="toggle-slider"></span>
@@ -439,7 +436,19 @@
                 </div>
             </div>
 
-            <div class="container" style="padding:16px;">
+            <!-- Tabs -->
+            <div style="padding: 0 16px; display:flex; gap:12px; margin-bottom:16px;">
+                <button id="btn-proxy-overview" class="proxy-tab-btn active" onclick="switchProxyTab('overview')"
+                    style="background:none; border:none; color:var(--text-primary); font-weight:600; border-bottom:2px solid var(--accent-cyan); padding-bottom:4px;">
+                    Overview
+                </button>
+                <button id="btn-proxy-config" class="proxy-tab-btn" onclick="switchProxyTab('config')"
+                    style="background:none; border:none; color:var(--text-secondary); font-weight:600; padding-bottom:4px;">
+                    Config (JSON)
+                </button>
+            </div>
+
+            <div id="proxyTab-overview" class="proxy-tab-content" style="padding:16px;">
                 <!-- Stats Cards -->
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -506,6 +515,41 @@
                 </div>
             </div>
         </div>
+
+        <!-- Config Tab -->
+        <div id="proxyTab-config" class="proxy-tab-content" style="padding:16px; display:none;">
+            <div class="card" style="padding:16px; background:var(--bg-secondary); border-radius:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="font-weight:600; color:var(--text-secondary);">Routing Rules (JSON)</div>
+                    <button class="btn-small" onclick="saveProxyConfig()"
+                        style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:600; cursor:pointer;">💾
+                        Save Config</button>
+                </div>
+                <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
+                    Define routing rules using Regex patterns.
+                    <br><code>pattern</code>: Regex for model name.
+                    <br><code>provider</code>: openai, anthropic, gemini.
+                </p>
+                <textarea id="proxyConfigEditor" spellcheck="false"
+                    style="width:100%; height:300px; background:var(--bg-deep); color:#a5d6a7; font-family:'JetBrains Mono', monospace; padding:12px; border:1px solid var(--border); border-radius:8px; font-size:13px; line-height:1.5;">
+{
+  "routes": [
+    {
+      "pattern": "gpt-.*",
+      "provider": "openai"
+    },
+    {
+      "pattern": "claude-.*",
+      "provider": "anthropic"
+    }
+  ]
+}
+                        </textarea>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
     </div>
 
     <!-- Log Detail Modal -->

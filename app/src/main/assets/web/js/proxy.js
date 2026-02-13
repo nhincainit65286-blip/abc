@@ -8,6 +8,47 @@ let lastLogId = null;
 function initProxyDashboard() {
     loadProxyStatus();
     startProxyPolling();
+    loadProxyConfig(); // New
+}
+
+function loadProxyConfig() {
+    if (typeof NeuroApp !== 'undefined') {
+        try {
+            const configJson = NeuroApp.getProxyConfig();
+            // Format JSON for textarea
+            const configObj = JSON.parse(configJson);
+            document.getElementById('proxyConfigEditor').value = JSON.stringify(configObj, null, 2);
+        } catch (e) {
+            console.error("Error loading proxy config", e);
+        }
+    }
+}
+
+function saveProxyConfig() {
+    if (typeof NeuroApp !== 'undefined') {
+        const editor = document.getElementById('proxyConfigEditor');
+        try {
+            // Validate JSON
+            const configObj = JSON.parse(editor.value);
+            const configJson = JSON.stringify(configObj);
+
+            NeuroApp.saveProxyConfig(configJson);
+            showToast('Config Saved Successfully 💾', 'success');
+        } catch (e) {
+            showToast('Invalid JSON Config ❌', 'error');
+        }
+    }
+}
+
+function switchProxyTab(tabName) {
+    // Hide all contents
+    document.querySelectorAll('.proxy-tab-content').forEach(el => el.style.display = 'none');
+    // Show selected
+    document.getElementById('proxyTab-' + tabName).style.display = 'block';
+
+    // Update tabs
+    document.querySelectorAll('.proxy-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('btn-proxy-' + tabName).classList.add('active');
 }
 
 function loadProxyStatus() {

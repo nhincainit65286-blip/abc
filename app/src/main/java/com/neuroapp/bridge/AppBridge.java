@@ -194,6 +194,26 @@ public class AppBridge {
         }
     }
 
+    @JavascriptInterface
+    public String getProxyConfig() {
+        if (proxyServer != null) {
+            return gson.toJson(proxyServer.getConfig());
+        }
+        return "{}";
+    }
+
+    @JavascriptInterface
+    public void saveProxyConfig(String jsonConfig) {
+        if (proxyServer != null) {
+            try {
+                ProxyConfig config = gson.fromJson(jsonConfig, ProxyConfig.class);
+                proxyServer.updateConfig(config);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     // ==================== Settings ====================
 
     @JavascriptInterface

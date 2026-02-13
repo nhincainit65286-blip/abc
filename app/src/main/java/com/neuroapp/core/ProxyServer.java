@@ -23,10 +23,26 @@ public class ProxyServer extends NanoHTTPD {
     private final java.util.LinkedList<ProxyLog> logs = new java.util.LinkedList<>();
     private static final int MAX_LOGS = 50;
 
+    // Default Config
+    private ProxyConfig config;
+
     public ProxyServer(AIEngine aiEngine, int port) {
         super(port);
         this.aiEngine = aiEngine;
         this.gson = new Gson();
+        this.config = new ProxyConfig();
+        // Default Routes
+        config.routes.add(new ProxyConfig.ProxyRoute("gpt-.*", "openai"));
+        config.routes.add(new ProxyConfig.ProxyRoute("claude-.*", "anthropic"));
+        config.routes.add(new ProxyConfig.ProxyRoute("gemini-.*", "gemini"));
+    }
+
+    public void updateConfig(ProxyConfig newConfig) {
+        this.config = newConfig;
+    }
+
+    public ProxyConfig getConfig() {
+        return config;
     }
 
     public synchronized java.util.List<ProxyLog> getLogs() {
@@ -122,20 +138,39 @@ public class ProxyServer extends NanoHTTPD {
                 return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "No user message found");
             }
 
-            String targetProvider = "openai";
-            if (model.contains("claude"))
-                targetProvider = "anthropic";
-            else if (model.contains("gemini"))
-                targetProvider = "gemini";
-            else if (model.contains("gpt"))
-                targetProvider = "openai";
+            // ROUTING LOGIC
+            String targetProvider = "openai"; // default fallback
+            String targetApiKey = null;
+            String targetUrl = null;
+            String originalModel = model;
+
+            // Match route
+            for (ProxyConfig.ProxyRoute route : config.routes) {
+                if (model.matches(route.pattern)) {
+                    targetProvider = route.provider;
+                    targetApiKey = route.apiKey;
+                    targetUrl = route.targetUrl;
+                    if (route.modelOverride != null && !route.modelOverride.isEmpty()) {
+                        model = route.modelOverride;
+                    }
+                    break;
+                }
+            }
 
             provider = targetProvider;
 
-            ProxyLog log = new ProxyLog(logId, "POST", "/v1/chat/completions", model, provider);
+            ProxyLog log = new ProxyLog(logId, "POST", "/v1/chat/completions", originalModel, provider);
             log.requestBody = requestBodyStr.length() > 200 ? requestBodyStr.substring(0, 200) + "..." : requestBodyStr;
 
             CompletableFuture<String> future = new CompletableFuture<>();
+
+            // NOTE: AIEngine currently doesn't support passing custom URL/Key dynamically
+            // per request easily.
+            // For now, we support Provider switching. Real implementation would require
+            // updating AIEngine to accept transient context.
+            // We will use the existing generateCodeWithProvider but in future we should
+            // pass a "RequestContext" object.
+
             aiEngine.generateCodeWithProvider(prompt, targetProvider, new AIEngine.AICallback() {
                 @Override
                 public void onSuccess(String result) {
