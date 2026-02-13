@@ -69,14 +69,80 @@ function saveProxyPalUrl() {
         return;
     }
     saveSetting('proxyPalUrl', url);
+    refreshProxyPalModels();
 }
 
 function toggleProxyPalSettings() {
     const provider = document.getElementById('settingProvider').value;
     const section = document.getElementById('proxyPalSection');
     if (section) {
-        section.style.display = provider === 'proxypal' ? 'block' : 'none';
+        if (provider === 'proxypal') {
+            section.style.display = 'block';
+            refreshProxyPalModels();
+        } else {
+            section.style.display = 'none';
+        }
     }
+}
+
+function refreshProxyPalModels() {
+    if (typeof NeuroApp === 'undefined') return;
+
+    const select = document.getElementById('settingProxyPalModel');
+    if (!select) return;
+
+    // Show loading state
+    const originalText = select.options[select.selectedIndex]?.text || 'Loading...';
+
+    const cbId = registerCallback(
+        (result) => {
+            try {
+                const data = JSON.parse(result);
+                // ProxyPal/OpenAI returns { data: [{id: "model-id", ...}, ...] }
+                if (data && data.data && Array.isArray(data.data)) {
+                    // Group models (simplistic grouping)
+                    const groups = {};
+                    data.data.forEach(m => {
+                        let group = 'Other';
+                        if (m.id.includes('gpt')) group = 'OpenAI';
+                        else if (m.id.includes('claude')) group = 'Claude';
+                        else if (m.id.includes('gemini')) group = 'Gemini';
+                        else if (m.id.includes('copilot')) group = 'Copilot';
+
+                        if (!groups[group]) groups[group] = [];
+                        groups[group].push(m.id);
+                    });
+
+                    // Rebuild select
+                    select.innerHTML = '';
+
+                    // Add current selection if not in list (to preserve it)
+                    const current = NeuroApp.getSettings ? JSON.parse(NeuroApp.getSettings()).proxyPalModel : '';
+
+                    Object.keys(groups).sort().forEach(group => {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = group;
+                        groups[group].sort().forEach(mid => {
+                            const opt = document.createElement('option');
+                            opt.value = mid;
+                            opt.textContent = mid;
+                            if (mid === current) opt.selected = true;
+                            optgroup.appendChild(opt);
+                        });
+                        select.appendChild(optgroup);
+                    });
+
+                    showToast('Models refreshed from ProxyPal 🔄', 'success');
+                }
+            } catch (e) {
+                console.error('Error parsing models:', e);
+            }
+        },
+        (error) => {
+            console.log('Failed to fetch models: ' + error);
+        }
+    );
+    NeuroApp.fetchProxyPalModels(cbId);
 }
 
 function testProxyPalConnection() {

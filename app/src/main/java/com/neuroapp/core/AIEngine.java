@@ -283,6 +283,33 @@ public class AIEngine {
         }
     }
 
+    public void fetchProxyPalModels(AICallback callback) {
+        String proxyUrl = getProxyPalUrl().replace("/chat/completions", "/models");
+        // fallback if user entered base url
+        if (!proxyUrl.endsWith("/models")) {
+            proxyUrl = getProxyPalUrl().replace("/v1/chat/completions", "/v1/models");
+        }
+
+        Request request = new Request.Builder()
+                .url(proxyUrl)
+                .get()
+                .build();
+
+        executor.execute(() -> {
+            try {
+                try (Response response = client.newCall(request).execute()) {
+                    String responseBody = response.body().string();
+                    if (!response.isSuccessful()) {
+                        throw new IOException("Error fetching models (" + response.code() + ")");
+                    }
+                    mainHandler.post(() -> callback.onSuccess(responseBody));
+                }
+            } catch (Exception e) {
+                mainHandler.post(() -> callback.onError(e.getMessage()));
+            }
+        });
+    }
+
     public void shutdown() {
         executor.shutdown();
     }

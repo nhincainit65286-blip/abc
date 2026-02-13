@@ -131,6 +131,22 @@ public class AppBridge {
                 callJS("onAIResponse", callbackId, "null", "'" + escapeJS(error) + "'");
             }
         });
+
+    }
+
+    @JavascriptInterface
+    public void fetchProxyPalModels(String callbackId) {
+        aiEngine.fetchProxyPalModels(new AIEngine.AICallback() {
+            @Override
+            public void onSuccess(String result) {
+                callJS("onProxyPalModelsFetched", callbackId, escapeJS(result), "null");
+            }
+
+            @Override
+            public void onError(String error) {
+                callJS("onProxyPalModelsFetched", callbackId, "null", "'" + escapeJS(error) + "'");
+            }
+        });
     }
 
     // ==================== Settings ====================

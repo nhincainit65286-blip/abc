@@ -12,6 +12,7 @@ function onAppReady(version) {
     document.getElementById('versionBadge').textContent = 'v' + version;
     document.getElementById('aboutVersion').textContent = 'Version ' + version;
     loadDashboard();
+    updateHeaderStatus();
 }
 
 // Splash screen auto-hide
@@ -20,7 +21,7 @@ setTimeout(() => {
     const app = document.getElementById('app');
     if (splash) splash.style.display = 'none';
     if (app) app.style.display = 'flex';
-    
+
     // Load data after splash
     setTimeout(() => {
         loadDashboard();
@@ -31,17 +32,17 @@ setTimeout(() => {
 // ===== Navigation =====
 function navigateTo(page) {
     currentPage = page;
-    
+
     // Update pages
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const targetPage = document.getElementById('page-' + page);
     if (targetPage) targetPage.classList.add('active');
-    
+
     // Update nav
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const navItem = document.querySelector('.nav-item[data-page="' + page + '"]');
     if (navItem) navItem.classList.add('active');
-    
+
     // Page-specific load
     switch (page) {
         case 'dashboard': loadDashboard(); break;
@@ -91,7 +92,7 @@ function loadProjects() {
         if (typeof NeuroApp !== 'undefined') {
             const projects = JSON.parse(NeuroApp.listProjects());
             const container = document.getElementById('projectsList');
-            
+
             if (!projects || projects.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -100,7 +101,7 @@ function loadProjects() {
                     </div>`;
                 return;
             }
-            
+
             container.innerHTML = projects.map(p => `
                 <div class="project-item" onclick="openProject('${escapeHtml(p.name)}')">
                     <div class="project-icon">📁</div>
@@ -142,7 +143,7 @@ function createNewProject() {
         showToast('Please enter a project name', 'error');
         return;
     }
-    
+
     try {
         if (typeof NeuroApp !== 'undefined') {
             const result = JSON.parse(NeuroApp.createProject(name));
@@ -173,7 +174,7 @@ function addActivity(text, color) {
         <span class="activity-time">Just now</span>
     `;
     feed.insertBefore(item, feed.firstChild);
-    
+
     // Keep only last 20
     while (feed.children.length > 20) {
         feed.removeChild(feed.lastChild);
@@ -197,7 +198,7 @@ function showToast(message, type) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
     toast.className = 'toast ' + (type || '') + ' show';
-    
+
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
         toast.classList.remove('show');
@@ -227,7 +228,7 @@ function formatDate(timestamp) {
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now - date;
-    
+
     if (diff < 60000) return 'Just now';
     if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
     if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
@@ -265,3 +266,28 @@ function onUpdateCheck(callbackId, version, changelog, status) {
 }
 
 console.log('NeuroApp initialized');
+
+function updateHeaderStatus() {
+    // Check AI Provider status
+    if (typeof NeuroApp !== 'undefined') {
+        try {
+            const settings = JSON.parse(NeuroApp.getSettings());
+            const badge = document.getElementById('versionBadge');
+
+            if (settings.aiProvider === 'proxypal') {
+                badge.innerHTML = '<span style="color:#4caf50;font-size:10px;">●</span> ProxyPal';
+                badge.style.borderColor = '#4caf50';
+                badge.style.color = '#a5d6a7';
+                badge.onclick = () => navigateTo('settings');
+            } else if (settings.aiProvider === 'openai') {
+                badge.innerHTML = 'GPT';
+                badge.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                badge.style.color = 'var(--text-secondary)';
+            } else {
+                badge.innerHTML = 'Gemini';
+                badge.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                badge.style.color = 'var(--text-secondary)';
+            }
+        } catch (e) { }
+    }
+}
