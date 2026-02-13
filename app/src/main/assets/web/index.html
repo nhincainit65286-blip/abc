@@ -39,19 +39,12 @@
 
         <!-- Header -->
         <header class="app-header">
-            <div class="header-left">
-                <div class="header-logo">
-                    <span class="logo-icon">⚡</span>
-                    <span class="logo-text">NeuroApp</span>
-                </div>
+            <div class="header-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">NEUROAPP STUDIO</span>
             </div>
-            <div class="header-right">
-                <span id="versionBadge" class="version-badge">v1.0.0</span>
-                <button id="notifBtn" class="header-btn" onclick="toggleNotifications()">
-                    <span class="notif-icon">🔔</span>
-                    <span id="notifDot" class="notif-dot" style="display:none;"></span>
-                </button>
-            </div>
+            <div id="statusIndicator"
+                style="width:8px; height:8px; background-color:var(--accent-secondary); border-radius:50%;"></div>
         </header>
 
         <!-- Pages -->
@@ -59,28 +52,19 @@
             <!-- Dashboard Page -->
             <div id="page-dashboard" class="page active">
                 <div class="page-scroll">
-                    <div class="greeting-section">
-                        <h2 class="greeting" id="greeting">Hello, Dev! 👋</h2>
-                        <p class="greeting-sub">AI is ready to code.</p>
-                    </div>
+                    <!-- Greeting Removed for Pro Look -->
+                    <div style="height:16px;"></div>
 
                     <!-- Quick Actions -->
+                    <!-- Quick Actions -->
                     <div class="quick-actions">
-                        <button class="quick-action-btn" onclick="navigateTo('editor')">
-                            <span class="qa-icon">📝</span>
+                        <button class="quick-action-btn" onclick="navigateTo('editor'); createNewFile();">
+                            <span class="qa-icon">📄</span>
                             <span class="qa-label">New File</span>
                         </button>
                         <button class="quick-action-btn" onclick="navigateTo('ai')">
-                            <span class="qa-icon">🤖</span>
+                            <span class="qa-icon">💬</span>
                             <span class="qa-label">AI Chat</span>
-                        </button>
-                        <button class="quick-action-btn" onclick="navigateTo('plugins')">
-                            <span class="qa-icon">🧩</span>
-                            <span class="qa-label">Plugins</span>
-                        </button>
-                        <button class="quick-action-btn" onclick="navigateTo('settings')">
-                            <span class="qa-icon">⚙️</span>
-                            <span class="qa-label">Settings</span>
                         </button>
                     </div>
 
