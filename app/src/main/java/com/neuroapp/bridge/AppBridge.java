@@ -156,7 +156,14 @@ public class AppBridge {
         JsonObject settings = new JsonObject();
         settings.addProperty("aiProvider", aiEngine.getProvider());
         settings.addProperty("apiKeyOpenai", maskApiKey(prefs.getString("api_key_openai", "")));
+        settings.addProperty("aiProvider", aiEngine.getProvider());
+        settings.addProperty("apiKeyOpenai", maskApiKey(prefs.getString("api_key_openai", "")));
         settings.addProperty("apiKeyGemini", maskApiKey(prefs.getString("api_key_gemini", "")));
+        settings.addProperty("apiKeyAnthropic", maskApiKey(prefs.getString("api_key_anthropic", "")));
+        settings.addProperty("proxyPalUrl", aiEngine.getProxyPalUrl());
+        settings.addProperty("proxyPalModel", aiEngine.getProxyPalModel());
+        settings.addProperty("customHeaders", aiEngine.getCustomHeaders());
+        settings.addProperty("autoUpdate", updateManager.isAutoUpdateEnabled());
         settings.addProperty("proxyPalUrl", aiEngine.getProxyPalUrl());
         settings.addProperty("proxyPalModel", aiEngine.getProxyPalModel());
         settings.addProperty("autoUpdate", updateManager.isAutoUpdateEnabled());
@@ -201,6 +208,9 @@ public class AppBridge {
                 break;
             case "proxyPalModel":
                 aiEngine.setProxyPalModel(value);
+                break;
+            case "customHeaders":
+                aiEngine.setCustomHeaders(value);
                 break;
         }
         editor.apply();

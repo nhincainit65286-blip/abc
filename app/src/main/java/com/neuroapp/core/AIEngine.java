@@ -29,6 +29,7 @@ public class AIEngine {
 
     private static final String OPENAI_URL = "https://api.openai.com/v1/chat/completions";
     private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private static final String ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
     private static final String PROXYPAL_DEFAULT_URL = "http://localhost:8317/v1/chat/completions";
 
     private final Context context;
@@ -84,6 +85,14 @@ public class AIEngine {
         prefs.edit().putString("proxypal_model", model).apply();
     }
 
+    public String getCustomHeaders() {
+        return prefs.getString("custom_headers", "{}");
+    }
+
+    public void setCustomHeaders(String jsonHeaders) {
+        prefs.edit().putString("custom_headers", jsonHeaders).apply();
+    }
+
     public void generateCode(String prompt, AICallback callback) {
         String provider = getProvider();
         String apiKey = getApiKey();
@@ -99,6 +108,8 @@ public class AIEngine {
                 String result;
                 if ("openai".equals(provider)) {
                     result = callOpenAI(apiKey, prompt);
+                } else if ("anthropic".equals(provider)) {
+                    result = callAnthropic(apiKey, prompt);
                 } else if ("proxypal".equals(provider)) {
                     result = callProxyPal(prompt);
                 } else {
@@ -241,6 +252,43 @@ public class AIEngine {
         }
     }
 
+    private String callAnthropic(String apiKey, String prompt) throws IOException {
+        JsonObject message = new JsonObject();
+        message.addProperty("role", "user");
+        message.addProperty("content", prompt);
+
+        JsonArray messages = new JsonArray();
+        messages.add(message);
+
+        JsonObject body = new JsonObject();
+        body.addProperty("model", "claude-3-5-sonnet-20240620"); // Default, should be configurable but hardcoding for
+                                                                 // now
+        body.add("messages", messages);
+        body.addProperty("max_tokens", 4096);
+        body.addProperty("system", "You are NeuroApp AI, a powerful code generation and analysis engine. "
+                + "You generate clean, efficient, well-documented code. "
+                + "You always follow best practices and modern patterns.");
+
+        Request request = new Request.Builder()
+                .url(ANTHROPIC_URL)
+                .addHeader("x-api-key", apiKey)
+                .addHeader("anthropic-version", "2023-06-01")
+                .addHeader("content-type", "application/json")
+                .post(RequestBody.create(body.toString(), MediaType.parse("application/json")))
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            String responseBody = response.body().string();
+            if (!response.isSuccessful()) {
+                throw new IOException("Anthropic Error (" + response.code() + "): " + responseBody);
+            }
+            JsonObject json = gson.fromJson(responseBody, JsonObject.class);
+            return json.getAsJsonArray("content")
+                    .get(0).getAsJsonObject()
+                    .get("text").getAsString();
+        }
+    }
+
     private String callProxyPal(String prompt) throws IOException {
         JsonObject message = new JsonObject();
         message.addProperty("role", "user");
@@ -264,11 +312,25 @@ public class AIEngine {
 
         String proxyUrl = getProxyPalUrl();
 
-        Request request = new Request.Builder()
+        Request.Builder requestBuilder = new Request.Builder()
                 .url(proxyUrl)
                 .addHeader("Content-Type", "application/json")
-                .post(RequestBody.create(body.toString(), MediaType.parse("application/json")))
-                .build();
+                .post(RequestBody.create(body.toString(), MediaType.parse("application/json")));
+
+        // Add Custom Headers (Cookies, Tokens, etc.)
+        try {
+            String customHeadersJson = getCustomHeaders();
+            if (customHeadersJson != null && !customHeadersJson.isEmpty()) {
+                JsonObject headers = gson.fromJson(customHeadersJson, JsonObject.class);
+                for (String key : headers.keySet()) {
+                    requestBuilder.addHeader(key, headers.get(key).getAsString());
+                }
+            }
+        } catch (Exception e) {
+            // Ignore malformed headers
+        }
+
+        Request request = requestBuilder.build();
 
         try (Response response = client.newCall(request).execute()) {
             String responseBody = response.body().string();

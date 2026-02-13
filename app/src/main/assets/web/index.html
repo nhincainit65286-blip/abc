@@ -258,7 +258,8 @@
                                 onchange="saveSetting('aiProvider', this.value); toggleProxyPalSettings()">
                                 <option value="gemini">Google Gemini</option>
                                 <option value="openai">OpenAI (GPT)</option>
-                                <option value="proxypal">🔌 ProxyPal (Local Proxy)</option>
+                                <option value="anthropic">Anthropic (Claude)</option>
+                                <option value="proxypal">🔌 ProxyPal (Local/Custom)</option>
                             </select>
                         </div>
 
@@ -278,11 +279,20 @@
                                 <button class="setting-save-btn" onclick="saveApiKey('gemini')">Save</button>
                             </div>
                         </div>
+
+                        <div class="setting-item" id="anthropicKeySection" style="display:none;">
+                            <label>Anthropic API Key</label>
+                            <div class="setting-input-group">
+                                <input type="password" id="settingKeyAnthropic" class="setting-input"
+                                    placeholder="sk-ant-...">
+                                <button class="setting-save-btn" onclick="saveApiKey('anthropic')">Save</button>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- ProxyPal Settings -->
+                    <!-- ProxyPal / Custom Settings -->
                     <div id="proxyPalSection" class="settings-section" style="display:none;">
-                        <div class="settings-section-title">🔌 ProxyPal Configuration</div>
+                        <div class="settings-section-title">🔌 Custom Proxy / ProxyPal</div>
                         <div class="proxypal-info">
                             <p style="color:var(--text-secondary);font-size:12px;line-height:1.5;margin-bottom:12px;">
                                 ProxyPal bridges your AI subscriptions (Claude, ChatGPT, Gemini, Copilot) via a local
@@ -325,109 +335,124 @@
                             </select>
                         </div>
 
-                        <button class="setting-action-btn" onclick="testProxyPalConnection()">
-                            🔌 Test Connection
-                        </button>
+                        </optgroup>
+                        </select>
                     </div>
 
-                    <!-- Editor Settings -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">✏️ Editor</div>
-
-                        <div class="setting-item">
-                            <label>Font Size</label>
-                            <input type="range" id="settingFontSize" class="setting-range" min="10" max="24" value="14"
-                                oninput="updateFontSize(this.value)">
-                            <span id="fontSizeValue" class="range-value">14px</span>
+                    <div class="setting-item">
+                        <label>Custom Headers (JSON)</label>
+                        <div class="setting-input-group">
+                            <textarea id="settingCustomHeaders" class="setting-input"
+                                style="height:80px;font-family:monospace;"
+                                placeholder='{"Authorization": "Bearer ...", "Cookie": "..."}'></textarea>
                         </div>
+                        <button class="setting-save-btn" onclick="saveCustomHeaders()" style="margin-top:8px;">Save
+                            Headers</button>
+                    </div>
 
-                        <div class="setting-item toggle-item">
-                            <label>Auto Save</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="settingAutoSave" checked
-                                    onchange="saveSetting('autoSave', this.checked)">
-                                <span class="toggle-slider"></span>
-                            </label>
+                    <button class="setting-action-btn" onclick="testProxyPalConnection()">
+                        🔌 Test Connection
+                    </button>
+                </div>
+
+                <!-- Editor Settings -->
+                <div class="settings-section">
+                    <div class="settings-section-title">✏️ Editor</div>
+
+                    <div class="setting-item">
+                        <label>Font Size</label>
+                        <input type="range" id="settingFontSize" class="setting-range" min="10" max="24" value="14"
+                            oninput="updateFontSize(this.value)">
+                        <span id="fontSizeValue" class="range-value">14px</span>
+                    </div>
+
+                    <div class="setting-item toggle-item">
+                        <label>Auto Save</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="settingAutoSave" checked
+                                onchange="saveSetting('autoSave', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Update Settings -->
+                <div class="settings-section">
+                    <div class="settings-section-title">🔄 Updates</div>
+
+                    <div class="setting-item toggle-item">
+                        <label>Auto Update</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="settingAutoUpdate"
+                                onchange="saveSetting('autoUpdate', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>Update Server URL</label>
+                        <div class="setting-input-group">
+                            <input type="url" id="settingUpdateUrl" class="setting-input"
+                                placeholder="https://api.github.com/repos/...">
+                            <button class="setting-save-btn"
+                                onclick="saveSetting('updateUrl', document.getElementById('settingUpdateUrl').value)">Save</button>
                         </div>
                     </div>
 
-                    <!-- Update Settings -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">🔄 Updates</div>
+                    <button class="setting-action-btn" onclick="checkForAppUpdate()">
+                        🔄 Check for Updates
+                    </button>
+                </div>
 
-                        <div class="setting-item toggle-item">
-                            <label>Auto Update</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="settingAutoUpdate"
-                                    onchange="saveSetting('autoUpdate', this.checked)">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="setting-item">
-                            <label>Update Server URL</label>
-                            <div class="setting-input-group">
-                                <input type="url" id="settingUpdateUrl" class="setting-input"
-                                    placeholder="https://api.github.com/repos/...">
-                                <button class="setting-save-btn"
-                                    onclick="saveSetting('updateUrl', document.getElementById('settingUpdateUrl').value)">Save</button>
-                            </div>
-                        </div>
-
-                        <button class="setting-action-btn" onclick="checkForAppUpdate()">
-                            🔄 Check for Updates
-                        </button>
-                    </div>
-
-                    <!-- About -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">ℹ️ About</div>
-                        <div class="about-card">
-                            <div class="about-logo">⚡</div>
-                            <h3>NeuroApp</h3>
-                            <p id="aboutVersion">Version 1.0.0</p>
-                            <p class="about-desc">Self-Evolving AI-Powered Development Environment</p>
-                            <div class="about-badges">
-                                <span class="badge badge-purple">AI Powered</span>
-                                <span class="badge badge-blue">Self-Evolving</span>
-                                <span class="badge badge-green">Auto-Update</span>
-                            </div>
+                <!-- About -->
+                <div class="settings-section">
+                    <div class="settings-section-title">ℹ️ About</div>
+                    <div class="about-card">
+                        <div class="about-logo">⚡</div>
+                        <h3>NeuroApp</h3>
+                        <p id="aboutVersion">Version 1.0.0</p>
+                        <p class="about-desc">Self-Evolving AI-Powered Development Environment</p>
+                        <div class="about-badges">
+                            <span class="badge badge-purple">AI Powered</span>
+                            <span class="badge badge-blue">Self-Evolving</span>
+                            <span class="badge badge-green">Auto-Update</span>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
+    </div>
+    </main>
 
-        <!-- Bottom Navigation -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-label">Home</span>
-                <span class="nav-indicator"></span>
-            </button>
-            <button class="nav-item" data-page="editor" onclick="navigateTo('editor')">
-                <span class="nav-icon">✏️</span>
-                <span class="nav-label">Editor</span>
-                <span class="nav-indicator"></span>
-            </button>
-            <button class="nav-item nav-center" data-page="ai" onclick="navigateTo('ai')">
-                <span class="nav-icon-center">🤖</span>
-                <span class="nav-label">AI</span>
-            </button>
-            <button class="nav-item" data-page="plugins" onclick="navigateTo('plugins')">
-                <span class="nav-icon">🧩</span>
-                <span class="nav-label">Plugins</span>
-                <span class="nav-indicator"></span>
-            </button>
-            <button class="nav-item" data-page="settings" onclick="navigateTo('settings')">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-label">Settings</span>
-                <span class="nav-indicator"></span>
-            </button>
-        </nav>
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Home</span>
+            <span class="nav-indicator"></span>
+        </button>
+        <button class="nav-item" data-page="editor" onclick="navigateTo('editor')">
+            <span class="nav-icon">✏️</span>
+            <span class="nav-label">Editor</span>
+            <span class="nav-indicator"></span>
+        </button>
+        <button class="nav-item nav-center" data-page="ai" onclick="navigateTo('ai')">
+            <span class="nav-icon-center">🤖</span>
+            <span class="nav-label">AI</span>
+        </button>
+        <button class="nav-item" data-page="plugins" onclick="navigateTo('plugins')">
+            <span class="nav-icon">🧩</span>
+            <span class="nav-label">Plugins</span>
+            <span class="nav-indicator"></span>
+        </button>
+        <button class="nav-item" data-page="settings" onclick="navigateTo('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Settings</span>
+            <span class="nav-indicator"></span>
+        </button>
+    </nav>
 
-        <!-- Navigation Bar Space -->
-        <div class="nav-bar-space"></div>
+    <!-- Navigation Bar Space -->
+    <div class="nav-bar-space"></div>
     </div>
 
     <!-- Modal Overlay -->

@@ -14,6 +14,7 @@ function loadSettings() {
             document.getElementById('fontSizeValue').textContent = (settings.fontSize || 14) + 'px';
             document.getElementById('settingProxyPalUrl').value = settings.proxyPalUrl || '';
             document.getElementById('settingProxyPalModel').value = settings.proxyPalModel || 'claude-sonnet-4-20250514';
+            document.getElementById('settingCustomHeaders').value = settings.customHeaders || '';
             document.getElementById('settingUpdateUrl').value = settings.updateUrl || '';
 
             // Show/hide ProxyPal section
@@ -39,7 +40,11 @@ function saveSetting(key, value) {
 }
 
 function saveApiKey(provider) {
-    const inputId = provider === 'openai' ? 'settingKeyOpenai' : 'settingKeyGemini';
+    let inputId;
+    if (provider === 'openai') inputId = 'settingKeyOpenai';
+    else if (provider === 'anthropic') inputId = 'settingKeyAnthropic';
+    else inputId = 'settingKeyGemini';
+
     const key = document.getElementById(inputId).value.trim();
 
     if (!key) {
@@ -49,7 +54,11 @@ function saveApiKey(provider) {
 
     try {
         if (typeof NeuroApp !== 'undefined') {
-            const settingKey = provider === 'openai' ? 'apiKeyOpenai' : 'apiKeyGemini';
+            let settingKey;
+            if (provider === 'openai') settingKey = 'apiKeyOpenai';
+            else if (provider === 'anthropic') settingKey = 'apiKeyAnthropic';
+            else settingKey = 'apiKeyGemini';
+
             NeuroApp.saveSetting(settingKey, key);
             document.getElementById(inputId).value = '';
             showToast(provider.toUpperCase() + ' API key saved! 🔑', 'success');
@@ -62,26 +71,30 @@ function saveApiKey(provider) {
     }
 }
 
-function saveProxyPalUrl() {
-    const url = document.getElementById('settingProxyPalUrl').value.trim();
-    if (!url) {
-        showToast('Enter a Proxy URL', 'error');
-        return;
+function saveCustomHeaders() {
+    const headers = document.getElementById('settingCustomHeaders').value.trim();
+    try {
+        if (headers) JSON.parse(headers); // Validate JSON
+        saveSetting('customHeaders', headers);
+    } catch (e) {
+        showToast('Invalid JSON headers', 'error');
     }
-    saveSetting('proxyPalUrl', url);
-    refreshProxyPalModels();
 }
 
 function toggleProxyPalSettings() {
     const provider = document.getElementById('settingProvider').value;
-    const section = document.getElementById('proxyPalSection');
-    if (section) {
-        if (provider === 'proxypal') {
-            section.style.display = 'block';
-            refreshProxyPalModels();
-        } else {
-            section.style.display = 'none';
-        }
+    const proxySection = document.getElementById('proxyPalSection');
+    const openaiSection = document.getElementById('openaiKeySection');
+    const geminiSection = document.getElementById('geminiKeySection');
+    const anthropicSection = document.getElementById('anthropicKeySection'); // New
+
+    if (proxySection) proxySection.style.display = provider === 'proxypal' ? 'block' : 'none';
+    if (openaiSection) openaiSection.style.display = provider === 'openai' ? 'block' : 'none';
+    if (geminiSection) geminiSection.style.display = provider === 'gemini' ? 'block' : 'none';
+    if (anthropicSection) anthropicSection.style.display = provider === 'anthropic' ? 'block' : 'none'; // New
+
+    if (provider === 'proxypal') {
+        refreshProxyPalModels();
     }
 }
 
